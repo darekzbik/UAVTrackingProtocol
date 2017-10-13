@@ -10,9 +10,13 @@ this document are to be interpreted as described in [RFC 2119](https://www.ietf.
 
 ## Approvals
 
-| Organisation         | Contact     | Date       |
-| -------------------- | ----------- | ---------- |
-| OPTIMAL TRACKING     | F. ABERLENC | 2017/10/12 |
+| Organisation         | Contact         | Date       |
+| -------------------- | --------------- | ---------- |
+| Optimal Tracking     | F. Aberlenc     | 2017/10/12 |
+| Hionos               | V. Brossard     | 2017/10/13 |
+| Atechsys             | M. Kasbari      | 2017/10/13 |
+| Atechsys             | B. Albouze      | 2017/10/13 |
+| AirSpace Drone       | A. Bascoulergue | 2017/10/13 |
 
 ## Lexical
 
@@ -26,8 +30,11 @@ this document are to be interpreted as described in [RFC 2119](https://www.ietf.
 
 This document specifies an open radio UAV tracking protocol. This protocol is
 intended to be used for broadcasting the UAV flight data in real time. It can
-either be used by UAV, by add-ons module attached to an UAV, by the UAV ground
+either be used by UAV, by add-on modules attached to a UAV, by the UAV ground
 station or by ground receivers and relays.
+
+Although radio specifications are described, this protocol may be used to 
+transfert indentification data through mobile network or any other IOT network.
 
 
 ## License
@@ -35,7 +42,8 @@ station or by ground receivers and relays.
 Except otherwise stated, the content of this specification is in the public
 domain, and code samples are licensed under the [Apache 2.0 License](http://www.apache.org/licenses/LICENSE-2.0).
 
-The use of this specification in products and code is entirely free: there are no royalties, restrictions, or requirements.
+The use of this specification in products and code is entirely free: there are
+no royalties, restrictions, or requirements.
 
 Manufacturers implementing this specification must ensure that the products
 conform to all applicable national or international regulations.
@@ -92,14 +100,14 @@ respected before next try.
 
 #### Payload Relay
 
-A receiver SHOULD relay a payload. The relay bit MUST be decremented by one
+A receiver CAN relay a payload. The relay bit MUST be decremented by one
 unit when relaying a payload.
 
 If the relay bit is 0, the payload MUST NOT be relayed.
 
 #### Duty Cycle
 
-The Duty Cycle is 1% and MUST be respected.
+The duty cycle is 1% and MUST be respected.
 
 ## Payload Specifications
 
@@ -107,7 +115,7 @@ The payload is divided in two parts: header and body.
 
 ### Coding Rules
 
-The data is stored in binary mode. The storage is in little indian,
+The data is stored in binary mode. The storage is in little endian,
 meaning that in a byte, the highest bit is written first and the lowest
 one at the end.
 
@@ -175,14 +183,14 @@ Ground stations receiving packet HAVE TO store it with receiving timestamp.
 #### Latitude
 
 - Description: Latitude WGS-84 (What should be a source of this data GPS/GLONASS/Galileo? WAAS should be enabled or not?)
-- Format: Signed integer
+- Format: signed integer
 - Unit: 180/2^24 degree. Precision below 1.20 meters
 - Length: 25 bits
 
 #### Longitude
 
 - Description: Longitude WGS-84
-- Format: Signed integer
+- Format: signed integer
 - Unit: 360/2^24 degree. Precision below 1.20 meters
 - Length: 25 bits
 
@@ -223,7 +231,7 @@ precision.
 #### Horizontal Speed
 
 - Description: horizontal speed.
-- Format: Unsigned Integer
+- Format: unsigned integer
 - Unit: 1 meter/second. Speed range from 0 to 255 m/s with 1m/s accuracy.
 - Length: 8 bits
 
@@ -232,14 +240,14 @@ precision.
 
 - Description: represents the angle between the horizontal displacement and the
   true North.
-- Format: Unsigned integer.
+- Format: unsigned integer
 - Unit: 1 degree. Values range from 0 to 359 with 1 degree accuracy
 - Length: 9 bits
 
 
 #### Vertical Speed
 - Description: Vertical speed.
-- Format: Signed Integer & encoding
+- Format: signed Integer & encoding
 
  | Binary value| meaning | 
  |-------------|---------|
@@ -253,7 +261,7 @@ precision.
 #### Relay Count
 - Description: counter for relaying the payload. Count must be decremented before
   relaying. When the count is 0, payload MUST NOT be relayed.
-- Format: Unsigned integer. Values range from 0 to 3.
+- Format: unsigned integer. Values range from 0 to 3.
 - Length: 2 bits
 
 #### Status
@@ -272,7 +280,7 @@ precision.
 ### UAV Category
 
 - Description: UAV Category allowing to define the risk it represents
-- Format: Unsigned Integer. Values range from 0 to 7 depending on risk level.
+- Format: unsigned integer. Values range from 0 to 7 depending on risk level.
 - Length: 3 bits
 
 
@@ -307,7 +315,7 @@ precision.
 
 Field matching table:
 
-| ASTERIX Part 29 Catégorie 129 | This protocol |
+| ASTERIX Part 29 Category 129 | This protocol |
 | ----------------------------- | ------------- |
 | Data source | 00/00 for «airborn to ground» transmissions
 | Data destination | unset for broadcast
@@ -360,3 +368,26 @@ Value can be used as is.
 #### GNSS Signal precision
 
 Value can be used as is.
+
+### Duty Cycle Demonstration
+
+Let's define messages are sent once every three seconds.
+
+1% duty cycle allows 30 ms channel occupation by message.
+
+With 50 kbps bitrate, this allows a 1500 bits message, which is 187 bytes.
+
+If the UAV is moving at 50 m/s, which is 180 km/h, the periodicity of the
+transmissions is then 1 second, because of the spatial requirement. The duty
+cycle will then limit the message length at 62 bytes.
+
+
+### Channel Congestion Avoidance Demonstration
+
+A network is said congested when 20% of the maximal usage is reached.
+
+In 3 seconds, it's then only possible to send 20% * 3 * 50000 bits, namely 3750
+bytes.
+
+This allows for 100 UAVs to be active in the same area, if the payload is
+37 bytes long and sent once every 3 seconds.
